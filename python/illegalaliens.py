@@ -41,6 +41,7 @@ BOMB_ODDS = 60  # chances a new bomb will drop
 ALIEN_RELOAD = 12  # frames between new aliens
 SCREENRECT = pg.Rect(0, 0, 640, 480)
 SCORE = 0
+PLAYER_LIVES = 2
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 
@@ -351,7 +352,7 @@ def main(winstyle=0):
         direction = keystate[pg.K_RIGHT] - keystate[pg.K_LEFT]
         if(direction == 0):
             direction = keystate[pg.K_d] - keystate[pg.K_a]
-        
+
         player.move(direction)
         firing = keystate[pg.K_SPACE] or keystate[pg.K_w]
         if not player.reloading and firing and len(shots) < MAX_SHOTS:
@@ -393,7 +394,9 @@ def main(winstyle=0):
                 boom_sound.play()
             Explosion(player)
             Explosion(bomb)
-            player.kill()
+            PLAYER_LIVES = -1
+            if PLAYER_LIVES == 0:
+                player.kill()
 
         # draw the scene
         dirty = all.draw(screen)
