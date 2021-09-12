@@ -41,7 +41,6 @@ BOMB_ODDS = 60  # chances a new bomb will drop
 ALIEN_RELOAD = 12  # frames between new aliens
 SCREENRECT = pg.Rect(0, 0, 640, 480)
 SCORE = 0
-PLAYER_LIVES = 2
 ALIEN_DAMAGE = 999
 BOMB_DAMAGE = 1
 SHOT_DAMAGE = 999
