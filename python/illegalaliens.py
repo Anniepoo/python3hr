@@ -17,8 +17,8 @@ What does it show you about pygame?
 Controls
 --------
 
-* Left and right arrows to move.
-* Space bar to shoot
+* Left and right arrows or a and d to move.
+* Space bar or w to shoot
 * f key to toggle between fullscreen.
 
 """
