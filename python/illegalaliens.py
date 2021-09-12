@@ -156,7 +156,6 @@ class Player(pg.sprite.Sprite):
         firing = keystate[pg.K_SPACE] or keystate[pg.K_w]
         if not self.semi_auto_fired and firing and num_shots_already < MAX_SHOTS:
             Shot(self.gunpos())
-            gs.shoot()
         self.semi_auto_fired = firing
 
 class Alien(pg.sprite.Sprite):
@@ -225,6 +224,7 @@ class Shot(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.containers)
         self.image = self.images[0]
         self.rect = self.image.get_rect(midbottom=pos)
+        gs.shoot()
 
     def update(self):
         """ called every time around the game loop.
