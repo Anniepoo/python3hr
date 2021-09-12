@@ -37,7 +37,7 @@ if not pg.image.get_extended():
 # game constants
 MAX_SHOTS = 2  # most player bullets onscreen
 ALIEN_ODDS = 22  # chances a new alien appears
-BOMB_ODDS = 50  # chances a new bomb will drop
+BOMB_ODDS = 60  # chances a new bomb will drop
 ALIEN_RELOAD = 12  # frames between new aliens
 SCREENRECT = pg.Rect(0, 0, 640, 480)
 SCORE = 0
@@ -116,7 +116,7 @@ class Alien(pg.sprite.Sprite):
     """
 
     speed = 13
-    animcycle = 12
+    animcycle = 6
     images = []
 
     def __init__(self):
@@ -135,7 +135,7 @@ class Alien(pg.sprite.Sprite):
             self.rect.top = self.rect.bottom + 1
             self.rect = self.rect.clamp(SCREENRECT)
         self.frame = self.frame + 1
-        self.image = self.images[self.frame // self.animcycle % 3]
+        self.image = self.images[(self.frame // self.animcycle) % 3]
 
 
 class Explosion(pg.sprite.Sprite):
