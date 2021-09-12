@@ -349,6 +349,9 @@ def main(winstyle=0):
 
         # handle player input
         direction = keystate[pg.K_RIGHT] - keystate[pg.K_LEFT]
+        if(direction == 0):
+            direction = keystate[pg.K_d] - keystate[pg.K_a]
+        
         player.move(direction)
         firing = keystate[pg.K_SPACE]
         if not player.reloading and firing and len(shots) < MAX_SHOTS:
