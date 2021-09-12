@@ -108,7 +108,6 @@ class GameSound:
 # The Player object actually gets a "move" function instead of update,
 # since it is passed extra information about the keyboard.
 
-
 class Player(pg.sprite.Sprite):
     """ Representing the player as a moon buggy type car.
     """
@@ -122,12 +121,12 @@ class Player(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.containers)
         self.image = self.images[0]
         self.rect = self.image.get_rect(midbottom=SCREENRECT.midbottom)
-        self.reloading = 0
+        self.semi_auto_fired = 0
         self.origtop = self.rect.top
         self.facing = -1
         self.health = 4
 
-    def move(self, direction):
+    def _move(self, direction):
         if direction:
             self.facing = direction
         self.rect.move_ip(direction * self.speed, 0)
@@ -147,6 +146,18 @@ class Player(pg.sprite.Sprite):
         Explosion(self)
         if(self.health <= 0):
             self.kill()
+
+    def handle_input(self, keystate, num_shots_already):
+        direction = keystate[pg.K_RIGHT] - keystate[pg.K_LEFT]
+        if(direction == 0):
+            direction = keystate[pg.K_d] - keystate[pg.K_a]
+        self._move(direction)
+
+        firing = keystate[pg.K_SPACE] or keystate[pg.K_w]
+        if not self.semi_auto_fired and firing and num_shots_already < MAX_SHOTS:
+            Shot(self.gunpos())
+            gs.shoot()
+        self.semi_auto_fired = firing
 
 class Alien(pg.sprite.Sprite):
     """ An alien space ship. That slowly moves down the screen.
@@ -280,6 +291,7 @@ def main(winstyle=0):
         pg.mixer.pre_init(44100, 32, 2, 1024)
     pg.init()
 
+    global gs
     gs = GameSound()
 
     fullscreen = False
@@ -376,16 +388,7 @@ def main(winstyle=0):
         all.update()
 
         # handle player input
-        direction = keystate[pg.K_RIGHT] - keystate[pg.K_LEFT]
-        if(direction == 0):
-            direction = keystate[pg.K_d] - keystate[pg.K_a]
-
-        player.move(direction)
-        firing = keystate[pg.K_SPACE] or keystate[pg.K_w]
-        if not player.reloading and firing and len(shots) < MAX_SHOTS:
-            Shot(player.gunpos())
-            gs.shoot()
-        player.reloading = firing
+        player.handle_input(keystate, len(shots))
 
         # Create new alien
         if alienreload:
