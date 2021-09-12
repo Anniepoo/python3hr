@@ -353,7 +353,7 @@ def main(winstyle=0):
             direction = keystate[pg.K_d] - keystate[pg.K_a]
         
         player.move(direction)
-        firing = keystate[pg.K_SPACE]
+        firing = keystate[pg.K_SPACE] or keystate[pg.K_w]
         if not player.reloading and firing and len(shots) < MAX_SHOTS:
             Shot(player.gunpos())
             if pg.mixer:
