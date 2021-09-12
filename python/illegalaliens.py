@@ -42,7 +42,10 @@ ALIEN_RELOAD = 12  # frames between new aliens
 SCREENRECT = pg.Rect(0, 0, 640, 480)
 SCORE = 0
 PLAYER_LIVES = 2
-FATAL_DAMAGE = 999
+ALIEN_DAMAGE = 999
+BOMB_DAMAGE = 1
+SHOT_DAMAGE = 999
+PLAYER_RAM_DAMAGE = 999
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 
@@ -172,6 +175,7 @@ class Alien(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.facing = random.choice((-1, 1)) * Alien.speed
         self.frame = 0
+        self.health = 1
         if self.facing < 0:
             self.rect.right = SCREENRECT.right
 
@@ -184,6 +188,11 @@ class Alien(pg.sprite.Sprite):
         self.frame = self.frame + 1
         self.image = self.images[(self.frame // self.animcycle) % 3]
 
+    def receive_damage(self, amount):
+        self.health -= amount
+        Explosion(self)
+        if(self.health <= 0):
+            self.kill()
 
 class Explosion(pg.sprite.Sprite):
     """ An explosion. Hopefully the Alien and not the player!
@@ -198,6 +207,7 @@ class Explosion(pg.sprite.Sprite):
         self.image = self.images[0]
         self.rect = self.image.get_rect(center=actor.rect.center)
         self.life = self.defaultlife
+        gs.boom()
 
     def update(self):
         """ called every time around the game loop.
@@ -384,7 +394,7 @@ def main(winstyle=0):
         # clear/erase the last drawn sprites
         all.clear(screen, background)
 
-        # update all the sprites
+        # update all the sprites            player.kill()
         all.update()
 
         # handle player input
@@ -403,26 +413,22 @@ def main(winstyle=0):
 
         # Detect collisions between aliens and players.
         for alien in pg.sprite.spritecollide(player, aliens, 1):
-            gs.boom()
             Explosion(alien)
-            Explosion(player)
+            alien.receive_damage(PLAYER_RAM_DAMAGE)
+            player.receive_damage(ALIEN_DAMAGE)
             SCORE = SCORE + 1
-            player.kill()
 
         # See if shots hit the aliens.
+        # this automatically removes the aliens and shots from groups
+        # so there's no need to call the shots
         for alien in pg.sprite.groupcollide(shots, aliens, 1, 1).keys():
-            gs.boom()
             Explosion(alien)
             SCORE = SCORE + 1
 
-        # See if alien boms hit the player.
+        # See if alien bombs hit the player.
         for bomb in pg.sprite.spritecollide(player, bombs, 1):
-            gs.boom()
-            Explosion(player)
-            Explosion(bomb)
-            PLAYER_LIVES = -1
-            if PLAYER_LIVES == 0:
-                player.kill()
+            player.receive_damage(BOMB_DAMAGE)
+            Explosion(bomb)   # the bomb has sep explosion from player
 
         # draw the scene
         dirty = all.draw(screen)
