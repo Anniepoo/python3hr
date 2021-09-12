@@ -42,9 +42,9 @@ ALIEN_RELOAD = 12  # frames between new aliens
 SCREENRECT = pg.Rect(0, 0, 640, 480)
 SCORE = 0
 PLAYER_LIVES = 2
+FATAL_DAMAGE = 999
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
-
 
 def load_image(file):
     """ loads an image, prepares it for play
@@ -56,20 +56,50 @@ def load_image(file):
         raise SystemExit('Could not load image "%s" %s' % (file, pg.get_error()))
     return surface.convert()
 
+# GameSound 
+gs = None
 
-def load_sound(file):
-    """ because pygame can be be compiled without mixer.
+class GameSound:
+    """ Manager for game sounds
     """
-    if not pg.mixer:
-        return None
-    file = os.path.join(main_dir, "data", file)
-    try:
-        sound = pg.mixer.Sound(file)
-        return sound
-    except pg.error:
-        print("Warning, unable to load, %s" % file)
-    return None
 
+    def _load_sound(self, file):
+        """ because pygame can be be compiled without mixer.
+        """
+        if not pg.mixer:
+            return None
+        file = os.path.join(main_dir, "data", file)
+        try:
+            sound = pg.mixer.Sound(file)
+            return sound
+        except pg.error:
+            print("Warning, unable to load, %s" % file)
+        return None
+
+    def __init__(self):
+        if pg.mixer and not pg.mixer.get_init():
+            print("Warning, no sound")
+            pg.mixer = None
+        if pg.mixer:
+            # load the sound effects
+            self.boom_sound = self._load_sound("boom.wav")
+            self.shoot_sound = self._load_sound("car_door.wav")
+            if pg.mixer:
+                music = os.path.join(main_dir, "data", "house_lo.wav")
+                pg.mixer.music.load(music)
+                pg.mixer.music.play(-1)
+
+    def end(self):
+        if pg.mixer:
+            pg.mixer.music.fadeout(1000)
+
+    def shoot(self):
+        if pg.mixer:
+            self.shoot_sound.play()
+
+    def boom(self):
+        if pg.mixer:
+            self.boom_sound.play()    
 
 # Each type of game object gets an init and an update function.
 # The update function is called once per frame, and it is when each object should
@@ -95,6 +125,7 @@ class Player(pg.sprite.Sprite):
         self.reloading = 0
         self.origtop = self.rect.top
         self.facing = -1
+        self.health = 4
 
     def move(self, direction):
         if direction:
@@ -111,6 +142,11 @@ class Player(pg.sprite.Sprite):
         pos = self.facing * self.gun_offset + self.rect.centerx
         return pos, self.rect.top
 
+    def receive_damage(self, amount):
+        self.health -= amount
+        Explosion(self)
+        if(self.health <= 0):
+            self.kill()
 
 class Alien(pg.sprite.Sprite):
     """ An alien space ship. That slowly moves down the screen.
@@ -243,9 +279,8 @@ def main(winstyle=0):
     if pg.get_sdl_version()[0] == 2:
         pg.mixer.pre_init(44100, 32, 2, 1024)
     pg.init()
-    if pg.mixer and not pg.mixer.get_init():
-        print("Warning, no sound")
-        pg.mixer = None
+
+    gs = GameSound()
 
     fullscreen = False
     # Set the display mode
@@ -276,14 +311,6 @@ def main(winstyle=0):
         background.blit(bgdtile, (x, 0))
     screen.blit(background, (0, 0))
     pg.display.flip()
-
-    # load the sound effects
-    boom_sound = load_sound("boom.wav")
-    shoot_sound = load_sound("car_door.wav")
-    if pg.mixer:
-        music = os.path.join(main_dir, "data", "house_lo.wav")
-        pg.mixer.music.load(music)
-        pg.mixer.music.play(-1)
 
     # Initialize Game Groups
     aliens = pg.sprite.Group()
@@ -357,8 +384,7 @@ def main(winstyle=0):
         firing = keystate[pg.K_SPACE] or keystate[pg.K_w]
         if not player.reloading and firing and len(shots) < MAX_SHOTS:
             Shot(player.gunpos())
-            if pg.mixer:
-                shoot_sound.play()
+            gs.shoot()
         player.reloading = firing
 
         # Create new alien
@@ -374,8 +400,7 @@ def main(winstyle=0):
 
         # Detect collisions between aliens and players.
         for alien in pg.sprite.spritecollide(player, aliens, 1):
-            if pg.mixer:
-                boom_sound.play()
+            gs.boom()
             Explosion(alien)
             Explosion(player)
             SCORE = SCORE + 1
@@ -383,15 +408,13 @@ def main(winstyle=0):
 
         # See if shots hit the aliens.
         for alien in pg.sprite.groupcollide(shots, aliens, 1, 1).keys():
-            if pg.mixer:
-                boom_sound.play()
+            gs.boom()
             Explosion(alien)
             SCORE = SCORE + 1
 
         # See if alien boms hit the player.
         for bomb in pg.sprite.spritecollide(player, bombs, 1):
-            if pg.mixer:
-                boom_sound.play()
+            gs.boom()
             Explosion(player)
             Explosion(bomb)
             PLAYER_LIVES = -1
@@ -405,8 +428,7 @@ def main(winstyle=0):
         # cap the framerate at 40fps. Also called 40HZ or 40 times per second.
         clock.tick(40)
 
-    if pg.mixer:
-        pg.mixer.music.fadeout(1000)
+    gs.end()
     pg.time.wait(1000)
     pg.quit()
 
