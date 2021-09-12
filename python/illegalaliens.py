@@ -37,7 +37,7 @@ if not pg.image.get_extended():
 # game constants
 MAX_SHOTS = 2  # most player bullets onscreen
 ALIEN_ODDS = 22  # chances a new alien appears
-BOMB_ODDS = 60  # chances a new bomb will drop
+BOMB_ODDS = 50  # chances a new bomb will drop
 ALIEN_RELOAD = 12  # frames between new aliens
 SCREENRECT = pg.Rect(0, 0, 640, 480)
 SCORE = 0
@@ -192,7 +192,7 @@ class Bomb(pg.sprite.Sprite):
     """ A bomb the aliens drop.
     """
 
-    speed = 9
+    speed = 4
     images = []
 
     def __init__(self, alien):
